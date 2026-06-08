@@ -2,7 +2,7 @@ import { CONFIG } from './config.js';
 
 // NORAD ID identificado como CAS-7B em referências públicas (44443).
 // Se o time confirmar outro ID, atualize esta constante.
-export const CAS7_NORAD_ID = 44443;
+export const CAS7_NORAD_ID = 67001;
 
 function buildProxyUrl(targetUrl) {
   return `${CONFIG.PROXY_BASE_URL}?url=${encodeURIComponent(targetUrl)}`;
