@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Delta Mitchell</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, sans-serif;
+      background: #0b1220;
+      color: #f4f7fb;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .container {
+      width: min(1024px, 100%);
+      background: #111827;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+      color: #f8fafc;
+    }
+
+    p {
+      color: #94a3b8;
+      margin-top: 0;
+      margin-bottom: 24px;
+      line-height: 1.7;
+    }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: #cbd5e1;
+      margin-bottom: 6px;
+    }
+
+    label span {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 400;
+      margin-left: 4px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid rgba(148,163,184,0.24);
+      border-radius: 12px;
+      padding: 12px 14px;
+      background: #0f172a;
+      color: #f8fafc;
+      font-size: 14px;
+    }
+
+    input::placeholder {
+      color: #64748b;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, #22c55e, #38bdf8);
+      color: #020617;
+    }
+
+    .secondary {
+      background: rgba(255,255,255,0.08);
+      color: #f8fafc;
+    }
+
+    .result-box {
+      background: #0f172a;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 18px;
+      margin-top: 24px;
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .result-title {
+      color: #94a3b8;
+      font-size: 13px;
+    }
+
+    .result-value {
+      color: #f8fafc;
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      text-align: left;
+      font-size: 14px;
+      color: #e2e8f0;
+    }
+
+    th {
+      color: #94a3b8;
+      font-weight: 700;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .empty-state {
+      color: #94a3b8;
+      padding: 14px 0;
+      text-align: center;
+    }
+
+    .small-note {
+      color: #cbd5e1;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Calculadora de Delta Mitchell</h1>
+    <p>Informe data e hora de cada evento, faça o cálculo e gere um CSV com os resultados.</p>
+
+    <div class="grid">
+      <div>
+        <label for="satId">Satélite <span>(nome do satélite)</span></label>
+        <input id="satId" type="text" placeholder="SAT001" value="SAT001" />
+      </div>
+      <div>
+        <label for="operatorName">Operador <span>(empresa ou grupo)</span></label>
+        <input id="operatorName" type="text" placeholder="SpaceX" value="SpaceX" />
+      </div>
+      <div>
+        <label for="manobraDate">Data da manobra <span>(início do evento)</span></label>
+        <input id="manobraDate" type="date" value="2025-12-10" />
+      </div>
+      <div>
+        <label for="manobraTime">Hora da manobra <span>(quando aconteceu)</span></label>
+        <input id="manobraTime" type="time" value="10:00" />
+      </div>
+      <div>
+        <label for="mitchellDate">Data da detecção <span>(quando detectou)</span></label>
+        <input id="mitchellDate" type="date" value="2025-12-10" />
+      </div>
+      <div>
+        <label for="mitchellTime">Hora da detecção <span>(momento detectado)</span></label>
+        <input id="mitchellTime" type="time" value="11:15" />
+      </div>
+      <div>
+        <label for="tleDate">Data do TLE público <span>(primeiro registro)</span></label>
+        <input id="tleDate" type="date" value="2025-12-10" />
+      </div>
+      <div>
+        <label for="tleTime">Hora do TLE público <span>(horário do TLE)</span></label>
+        <input id="tleTime" type="time" value="16:30" />
+      </div>
+    </div>
+
+    <div class="button-row">
+      <button class="primary" id="calculateBtn">Calcular agora</button>
+      <button class="secondary" id="addRecordBtn">Adicionar ao relatório</button>
+      <button class="secondary" id="downloadCsvBtn">Baixar CSV</button>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-row">
+        <div>
+          <div class="result-title">Delta de antecipação</div>
+          <div class="result-value" id="deltaValue">--</div>
+        </div>
+        <div>
+          <div class="result-title">Latência pública</div>
+          <div class="result-value" id="latencyValue">--</div>
+        </div>
+      </div>
+      <div class="result-row">
+        <div>
+          <div class="result-title">Resultado</div>
+          <div class="result-value" id="statusValue">--</div>
+        </div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+              <th>Satélite</th>
+          <th>Operador</th>
+          <th>Manobra</th>
+          <th>Detecção</th>
+          <th>TLE público</th>
+          <th>Delta</th>
+          <th>Latência</th>
+        </tr>
+      </thead>
+      <tbody id="reportBody">
+        <tr><td colspan="7" class="empty-state">Nenhum registro adicionado ainda.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const satIdInput = document.getElementById('satId');
+    const operatorNameInput = document.getElementById('operatorName');
+    const manobraDateInput = document.getElementById('manobraDate');
+    const manobraTimeInput = document.getElementById('manobraTime');
+    const mitchellDateInput = document.getElementById('mitchellDate');
+    const mitchellTimeInput = document.getElementById('mitchellTime');
+    const tleDateInput = document.getElementById('tleDate');
+    const tleTimeInput = document.getElementById('tleTime');
+    const deltaValue = document.getElementById('deltaValue');
+    const latencyValue = document.getElementById('latencyValue');
+    const statusValue = document.getElementById('statusValue');
+    const reportBody = document.getElementById('reportBody');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const addRecordBtn = document.getElementById('addRecordBtn');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+
+    let reportRecords = [];
+
+    function parseIsoUtc(value) {
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) {
+        return null;
+      }
+      return parsed;
+    }
+
+    function formatDelta(deltaMinutes) {
+      const sign = deltaMinutes < 0 ? '-' : '';
+      const absMinutes = Math.abs(Math.round(deltaMinutes));
+      const hours = Math.floor(absMinutes / 60);
+      const minutes = absMinutes % 60;
+      return `${sign}${hours}h${minutes.toString().padStart(2, '0')}m`;
+    }
+
+    function buildIso(valueDate, valueTime) {
+      if (!valueDate || !valueTime) {
+        return null;
+      }
+      return `${valueDate}T${valueTime}:00Z`;
+    }
+
+    function calculate() {
+      const tManobraIso = buildIso(manobraDateInput.value, manobraTimeInput.value);
+      const tMitchellIso = buildIso(mitchellDateInput.value, mitchellTimeInput.value);
+      const tTlePublicoIso = buildIso(tleDateInput.value, tleTimeInput.value);
+
+      const tManobra = parseIsoUtc(tManobraIso);
+      const tMitchell = parseIsoUtc(tMitchellIso);
+      const tTlePublico = parseIsoUtc(tTlePublicoIso);
+
+      if (!tManobra || !tMitchell || !tTlePublico) {
+        alert('Preencha todas as datas e horas válidas para manobra, detecção Mitchell e TLE público.');
+        return null;
+      }
+
+      const deltaMinutes = (tTlePublico - tMitchell) / 60000;
+      const latencyMinutes = (tTlePublico - tManobra) / 60000;
+      const deltaLabel = formatDelta(deltaMinutes);
+      const latencyLabel = formatDelta(latencyMinutes);
+      const status = deltaMinutes > 0 ? 'Houve antecipação' : 'Não houve antecipação';
+
+      deltaValue.textContent = `${deltaMinutes.toFixed(1)} min (${deltaLabel})`;
+      latencyValue.textContent = `${latencyMinutes.toFixed(1)} min (${latencyLabel})`;
+      statusValue.textContent = status;
+
+      return {
+        satId: satIdInput.value.trim() || 'SAT-N/D',
+        operatorName: operatorNameInput.value.trim() || 'N/D',
+        tManobra: tManobraIso,
+        tMitchell: tMitchellIso,
+        tTlePublico: tTlePublicoIso,
+        deltaMinutes: deltaMinutes.toFixed(1),
+        deltaLabel,
+        latencyMinutes: latencyMinutes.toFixed(1),
+        latencyLabel,
+      };
+    }
+
+    function refreshReportTable() {
+      reportBody.innerHTML = '';
+      if (reportRecords.length === 0) {
+        reportBody.innerHTML = '<tr><td colspan="7" class="empty-state">Nenhum registro adicionado ainda.</td></tr>';
+        return;
+      }
+
+      for (const record of reportRecords) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${record.satId}</td>
+          <td>${record.operatorName}</td>
+          <td>${record.tManobra}</td>
+          <td>${record.tMitchell}</td>
+          <td>${record.tTlePublico}</td>
+          <td>${record.deltaMinutes} min (${record.deltaLabel})</td>
+          <td>${record.latencyMinutes} min (${record.latencyLabel})</td>
+        `;
+        reportBody.appendChild(row);
+      }
+    }
+
+    function downloadCsv() {
+      if (reportRecords.length === 0) {
+        alert('Adicione pelo menos um registro antes de baixar o CSV.');
+        return;
+      }
+
+      const headers = [
+        'sat_id',
+        'operator_name',
+        't_manobra',
+        't_mitchell',
+        't_tle_publico',
+        'delta_minutes',
+        'delta_formatado',
+        'latency_minutes',
+        'latency_formatado'
+      ];
+
+      const rows = reportRecords.map(record => [
+        record.satId,
+        record.operatorName,
+        record.tManobra,
+        record.tMitchell,
+        record.tTlePublico,
+        record.deltaMinutes,
+        record.deltaLabel,
+        record.latencyMinutes,
+        record.latencyLabel,
+      ]);
+
+      const csvContent = [headers, ...rows]
+        .map(row => row.map(value => `"${String(value).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'relatorio_delta_mitchell.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    calculateBtn.addEventListener('click', () => { calculate(); });
+    addRecordBtn.addEventListener('click', () => {
+      const result = calculate();
+      if (!result) return;
+      reportRecords.push(result);
+      refreshReportTable();
+    });
+    downloadCsvBtn.addEventListener('click', downloadCsv);
+  </script>
+</body>
+</html>

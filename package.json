@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "satellite.js": "^4.1.3"
+  }
+}
